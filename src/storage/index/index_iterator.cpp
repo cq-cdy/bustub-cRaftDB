@@ -40,6 +40,7 @@ auto INDEXITERATOR_TYPE::operator*() -> const MappingType & { return leaf_->GetI
 
 INDEX_TEMPLATE_ARGUMENTS
 auto INDEXITERATOR_TYPE::operator++() -> INDEXITERATOR_TYPE & {
+    // 如果，该kv对是一个节点中的最后一组
   if (index_ == leaf_->GetSize() - 1 && leaf_->GetNextPageId() != INVALID_PAGE_ID) {
     auto next_page = buffer_pool_manager_->FetchPage(leaf_->GetNextPageId());
 

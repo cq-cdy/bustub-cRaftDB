@@ -152,7 +152,7 @@ template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Bucket::Find(const K &key, V &value) -> bool {
   return std::any_of(list_.begin(), list_.end(), [&key, &value](const auto &item) {
     if (item.first == key) {
-      value = item.second;
+      value = item.second; // value 为传出参数
       return true;
     }
     return false;
