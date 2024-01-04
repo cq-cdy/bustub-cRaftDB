@@ -90,10 +90,14 @@ template <typename K, typename V>
 void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
   std::scoped_lock<std::mutex> lock(latch_);
 
-  while (dir_[IndexOf(key)]->IsFull()) {
+    // 这个IsFull()满就是单纯指某桶的元素个数满了，这个存储size多少个是创建桶的时候指定的
+    // 不是深度
+  while (dir_[IndexOf(key)]->IsFull()) { // 注意这是while，一定会保证 不满 才会往下进行
+    // full then  here
     auto index = IndexOf(key);
     auto target_bucket = dir_[index];
 
+    // 并且用来区分的dir_的bit位也满了,那就要增加bit位的深度了
     if (target_bucket->GetDepth() == GetGlobalDepthInternal()) {
       global_depth_++;
       int capacity = dir_.size();
@@ -104,11 +108,14 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
     }
 
     int mask = 1 << target_bucket->GetDepth();
+    // 因为 dir_[IndexOf(key)] 这个桶满了，要分成两个桶，所以这里创建两个，增加桶的bit位置
     auto bucket_0 = std::make_shared<Bucket>(bucket_size_, target_bucket->GetDepth() + 1);
     auto bucket_1 = std::make_shared<Bucket>(bucket_size_, target_bucket->GetDepth() + 1);
 
+    // 把原先满的桶中的元素，重新hash到这2个新桶里面
     for (const auto &item : target_bucket->GetItems()) {
       size_t hash_key = std::hash<K>()(item.first);
+      // 用来区分哪些元素进哪个桶的策略罢了
       if ((hash_key & mask) != 0U) {
         bucket_1->Insert(item.first, item.second);
       } else {
@@ -118,6 +125,20 @@ void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
 
     num_buckets_++;
 
+    /*
+        这里并不是会丢弃掉bucket_1 或者 bucket_0
+        因为，在从0开始假如元素时，当桶深度 == 全局深度时，就会 <<1 扩容
+        因此 移位扩容时，其中dir_.resize(capacity << 1);扩容了两倍，
+        会导致另一个dir_ 也会 指向 该target_bucket，
+        又因为是移位扩容，所以原先的 dir[i] 和 dir[i + capacity] 与mask,
+        做&时候是肯定不一样的，mask就是由 1 << target_bucket->GetDepth()得到的
+        所以下面的for循环，如果dir[i] 走的 bucket_1，那么dir[i+capacity] 就必然是 bucket_0
+        因为扩容两倍，就相当于 <<1 ,而mask也是 <<1 ,所以i和i+capacity，在二进制上，一定是i+capacity
+        会多一个二进制为，也就是i+capacity 正好和 mask (1 << depth) 能为true，i 和 mask & 为false
+
+        关键就是 dir_中不值一个目录指向 target_bucket，而且，这些目录，i & mask 一定不是全相同的
+        于是就可以对这两个新桶重定向
+    */
     for (size_t i = 0; i < dir_.size(); i++) {
       if (dir_[i] == target_bucket) {
         if ((i & mask) != 0U) {
@@ -152,7 +173,7 @@ template <typename K, typename V>
 auto ExtendibleHashTable<K, V>::Bucket::Find(const K &key, V &value) -> bool {
   return std::any_of(list_.begin(), list_.end(), [&key, &value](const auto &item) {
     if (item.first == key) {
-      value = item.second; // value 为传出参数
+      value = item.second;  // value 为传出参数
       return true;
     }
     return false;
