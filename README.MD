@@ -11,8 +11,10 @@
 参考代码[bustub](https://github.com/cmu-db/bustub) 和[bustub](https://github.com/ejunjsh/bustub)
 
 目前整体的cmu-busub代码量约1.4W行，目前已经完成了cmu的数据库内核的实现，以及将cEaft代码库整合上(tools/shell/shell.cpp)，接下来准备完成的是重写sql的上层服务将其分布式。
-```
-class bustubDB : public craft::AbstractPersist
+```c++
+class bustubDB : public craft::AbstractPersist{
+    ...
+}
 ```
 
 ## 接下来的工作是将这个简单的关系型数据库内核分布式化
