@@ -21,6 +21,8 @@
 
 namespace bustub {
 
+
+// k 是 pageid,V是pageid在缓存池中的下标
 template <typename K, typename V>
 ExtendibleHashTable<K, V>::ExtendibleHashTable(size_t bucket_size)
     : global_depth_(0), bucket_size_(bucket_size), num_buckets_(1) {

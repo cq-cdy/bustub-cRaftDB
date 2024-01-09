@@ -78,7 +78,6 @@ BustubInstance::BustubInstance() {
 
   // Storage related.
   disk_manager_ = new DiskManagerUnlimitedMemory();
-
   // Log related.
   log_manager_ = new LogManager(disk_manager_);
 
@@ -176,6 +175,7 @@ auto BustubInstance::ExecuteSql(const std::string &sql, ResultWriter &writer) ->
   auto txn = txn_manager_->Begin();
   auto result = ExecuteSqlTxn(sql, writer, txn);
   txn_manager_->Commit(txn);
+  buffer_pool_manager_->FlushAllPages();
   delete txn;
   return result;
 }
@@ -345,8 +345,8 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
       writer.EndRow();
     }
     writer.EndTable();
+    buffer_pool_manager_->FlushAllPages();
   }
-
   return is_successful;
 }
 

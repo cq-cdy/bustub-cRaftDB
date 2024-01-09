@@ -54,7 +54,7 @@ class TablePage : public Page {
   void Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id, LogManager *log_manager, Transaction *txn);
 
   /** @return the page ID of this table page */
-  auto GetTablePageId() -> page_id_t { return *reinterpret_cast<page_id_t *>(GetData()); }
+  auto GetTablePageId() -> page_id_t { return *reinterpret_cast<page_id_t *>(GetData()); }  // 前四个地址就算pageid
 
   /** @return the page ID of the previous table page */
   auto GetPrevPageId() -> page_id_t { return *reinterpret_cast<page_id_t *>(GetData() + OFFSET_PREV_PAGE_ID); }

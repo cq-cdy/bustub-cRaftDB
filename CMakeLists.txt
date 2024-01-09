@@ -11,7 +11,12 @@ project(BusTub
         DESCRIPTION "The BusTub Relational Database Management System (Educational) @ https://github.com/cmu-db/bustub"
         LANGUAGES C CXX
         )
-
+    if (MSVC) # Visual Studio 编译器
+        add_compile_options(/W0)
+    else() # 其他编译器
+        add_compile_options(-w)
+    endif()
+    
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to `Debug` as none was specified.")
     set(CMAKE_BUILD_TYPE "Debug")

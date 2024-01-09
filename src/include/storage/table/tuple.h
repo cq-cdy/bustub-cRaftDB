@@ -51,7 +51,7 @@ class Tuple {
   ~Tuple() {
     if (allocated_) {
       delete[] data_;
-    }
+    } 
     allocated_ = false;
     data_ = nullptr;
   }
