@@ -118,7 +118,7 @@ auto B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const
   if (target_in_array == GetSize() || keyComparator(array_[target_in_array].first, key) != 0) {
     return GetSize();
   }
-   // 把target_in_array 之后的元素整体向前移动一位，覆盖掉第target_in_array，就等于删除了target_in_array
+  // 把target_in_array 之后的元素整体向前移动一位，覆盖掉第target_in_array，就等于删除了target_in_array
   std::move(array_ + target_in_array + 1, array_ + GetSize(), array_ + target_in_array);
   IncreaseSize(-1);
   return GetSize();

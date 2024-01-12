@@ -86,12 +86,12 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value,
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-/// @brief 
-/// 在 B+树内部页中插入一个新的节点，在old_value之后插入new KV        
-/// @param old_value 
-/// @param new_key 
-/// @param new_value 
-/// @return 
+/// @brief
+/// 在 B+树内部页中插入一个新的节点，在old_value之后插入new KV
+/// @param old_value
+/// @param new_key
+/// @param new_value
+/// @return
 auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, const KeyType &new_key,
                                                      const ValueType &new_value) -> int {
   auto new_value_idx = ValueIndex(old_value) + 1;
@@ -107,9 +107,9 @@ auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value,
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-/// @brief 
+/// @brief
 /// @param recipient 目标地址
-/// @param buffer_pool_manager 
+/// @param buffer_pool_manager
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient,
                                                 BufferPoolManager *buffer_pool_manager) {
   int start_split_indx = GetMinSize();
@@ -143,7 +143,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {
 
 INDEX_TEMPLATE_ARGUMENTS
 auto B_PLUS_TREE_INTERNAL_PAGE_TYPE::RemoveAndReturnOnlyChild() -> ValueType {
-  ValueType only_value = ValueAt(0);// 注意0号value是有效的，0号key才是不用的
+  ValueType only_value = ValueAt(0);  // 注意0号value是有效的，0号key才是不用的
   SetSize(0);
   return only_value;
 }
@@ -176,9 +176,9 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeInternalPage *rec
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyLastFrom(const MappingType &pair, BufferPoolManager *buffer_pool_manager) {
-  *(array_ + GetSize()) = pair; // 在末尾添加一个KV
+  *(array_ + GetSize()) = pair;  // 在末尾添加一个KV
   IncreaseSize(1);
-  //pair.second 就是V，就是子节点，子节点的父节点就算当前page
+  // pair.second 就是V，就是子节点，子节点的父节点就算当前page
   auto page = buffer_pool_manager->FetchPage(pair.second);
   auto *node = reinterpret_cast<BPlusTreePage *>(page->GetData());
   node->SetParentPageId(GetPageId());

@@ -33,6 +33,11 @@ class Transaction;
  * the index key, so it is the index's responsibility to maintain such a
  * mapping relation and does the conversion between tuple key and index key
  */
+/*
+IndexMetadata类是用于存储索引对象的元数据信息的类。
+每个索引对象都会有一个对应的IndexMetadata实例
+来存储索引的名称、所在表的名称、索引的键的模式以及索引键和表键之间的映射关系。
+*/
 class IndexMetadata {
  public:
   IndexMetadata() = delete;

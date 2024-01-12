@@ -92,6 +92,7 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
 
 INDEX_TEMPLATE_ARGUMENTS
 auto BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, Transaction *transaction) -> bool {
+  // 获取key所在的b+树的叶子节点
   auto leaf_page = FindLeaf(key, Operation::INSERT, transaction);
   auto *node = reinterpret_cast<LeafPage *>(leaf_page->GetData());
 
@@ -458,6 +459,7 @@ auto BPLUSTREE_TYPE::FindLeaf(const KeyType &key, Operation operation, Transacti
   assert(operation == Operation::SEARCH ? !(leftMost && rightMost) : transaction != nullptr);
 
   assert(root_page_id_ != INVALID_PAGE_ID);
+  // 此处的root_page_id 在构造时根据列名元信息，拿到的改列对应的root_page_id_
   auto page = buffer_pool_manager_->FetchPage(root_page_id_);
   auto *node = reinterpret_cast<BPlusTreePage *>(page->GetData());
   if (operation == Operation::SEARCH) {

@@ -57,9 +57,17 @@ auto InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) -> bool {
       } catch (TransactionAbortException e) {
         throw ExecutionException("Insert Executor Get Row Lock Failed");
       }
-
+    //   for (auto index : table_indexes_) {
+    //     index->index_->InsertEntry(
+    //         to_insert_tuple.KeyFromTuple(table_info_->schema_, index->key_schema_, index->index_->GetKeyAttrs()), 
+    //         *rid,
+    //         exec_ctx_->GetTransaction()
+    //     );
+    //   }
+    // 更新索引
       std::for_each(table_indexes_.begin(), table_indexes_.end(),
                     [&to_insert_tuple, &rid, &table_info = table_info_, &exec_ctx = exec_ctx_](IndexInfo *index) {
+                      // to_insert_tuple.KeyFromTuple 是拿到他需要建立索引的列tuple
                       index->index_->InsertEntry(to_insert_tuple.KeyFromTuple(table_info->schema_, index->key_schema_,
                                                                               index->index_->GetKeyAttrs()),
                                                  *rid, exec_ctx->GetTransaction());

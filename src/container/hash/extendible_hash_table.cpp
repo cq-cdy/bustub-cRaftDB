@@ -21,7 +21,6 @@
 
 namespace bustub {
 
-
 // k 是 pageid,V是pageid在缓存池中的下标
 template <typename K, typename V>
 ExtendibleHashTable<K, V>::ExtendibleHashTable(size_t bucket_size)
@@ -92,9 +91,9 @@ template <typename K, typename V>
 void ExtendibleHashTable<K, V>::Insert(const K &key, const V &value) {
   std::scoped_lock<std::mutex> lock(latch_);
 
-    // 这个IsFull()满就是单纯指某桶的元素个数满了，这个存储size多少个是创建桶的时候指定的
-    // 不是深度
-  while (dir_[IndexOf(key)]->IsFull()) { // 注意这是while，一定会保证 不满 才会往下进行
+  // 这个IsFull()满就是单纯指某桶的元素个数满了，这个存储size多少个是创建桶的时候指定的
+  // 不是深度
+  while (dir_[IndexOf(key)]->IsFull()) {  // 注意这是while，一定会保证 不满 才会往下进行
     // full then  here
     auto index = IndexOf(key);
     auto target_bucket = dir_[index];

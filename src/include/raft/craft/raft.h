@@ -1,102 +1,97 @@
-#pragma  once
+#pragma once
 
-#include "public.h"
-#include "nocopyable.h"
-#include "libgo/coroutine.h"
 #include "grpc++/grpc++.h"
-#include  "peers.h"
-#include "utils/timer.h"
-#include "startRpcService.h"
+#include "libgo/coroutine.h"
+#include "nocopyable.h"
+#include "peers.h"
 #include "persist/abstractPersist.h"
+#include "public.h"
+#include "startRpcService.h"
+#include "utils/timer.h"
 
 namespace craft {
 
-    class Raft final : public noncopyable {
+class Raft final : public noncopyable {
+ public:
+  explicit Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh);
 
-    public:
-        explicit Raft(AbstractPersist *persister, co_chan<ApplyMsg> *applyCh) ;
+  void launch();
 
-        void launch() ;
+  ~Raft();
 
-        ~Raft();
+ private:
+  void co_launchRpcSevices();
 
-    private:
-        void co_launchRpcSevices();
+  void co_startElection();
 
-        void co_startElection();
+  void co_applyLogs();
 
-        void co_applyLogs();
+  void co_appendAentries();
 
-        void co_appendAentries();
+ public:
+  void persist();
+  bool saveSnapShot(int index);
+  void loadFromPersist();
 
-    public:
+  void changeToState(STATE toState);
+  ServerCallResult submitCommand(std::string command);
+  void initFromConfig(const std::string &filename);
+  void setClusterAddress(const std::vector<std::string> &clusterAddress);
+  void setLeaderEelectionTimeOut(uint millisecond);
+  void setRpcTimeOut(uint millisecond);
+  void setHeatBeatTimeOut(uint millisecond);
+  void setLogLevel(spdlog::level::level_enum loglevel);
 
-        void persist();
-        bool saveSnapShot(int index);
-        void loadFromPersist();
+  // some util function
 
-        void changeToState(STATE toState) ;
-        ServerCallResult submitCommand(std::string command );
-        void initFromConfig(const std::string& filename) ;
-        void setClusterAddress(const std::vector<std::string> &clusterAddress) ;
-        void setLeaderEelectionTimeOut(uint millisecond) ;
-        void setRpcTimeOut(uint millisecond) ;
-        void setHeatBeatTimeOut(uint millisecond) ;
-        void setLogLevel(spdlog::level::level_enum loglevel) ;
+  int getLastLogIndex() const;
 
-        //some util function
+  int getLastLogTerm() const;
 
-        int getLastLogIndex() const ;
+  // use to debug
+  static std::string stringState(STATE state);
 
-        int getLastLogTerm() const ;
-        
-        // use to debug
-        static std::string stringState(STATE state);
+ public:
+  // some util function
+  bool isOutOfArgsAppendEntries(const ::AppendEntriesArgs *args) const;
+  int getStoreIndexByLogIndex(int logIndex);
+  void tryCommitLog();
 
-    public:
-        //some util function
-        bool isOutOfArgsAppendEntries(const ::AppendEntriesArgs *args) const;
-        int getStoreIndexByLogIndex(int logIndex);
-        void tryCommitLog();
+  std::tuple<int, int, std::vector<LogEntry>> getAppendLogs(int peerId);
 
-        std::tuple<int,int,std::vector<LogEntry>> getAppendLogs(int peerId);
+ public:
+  int m_me_{-1};
+  int m_current_term_ = 0;
+  int m_votedFor_ = -1;
+  int m_commitIndex_ = 0;
+  int m_lastApplied_ = 0;
+  int m_snapShotIndex = 0;
+  int m_snapShotTerm = 0;
+  bool m_iskilled_ = false;
+  std::vector<std::string> m_clusterAddress_;
+  uint m_leaderEelectionTimeOut_ = 800;
+  uint m_rpcTimeOut_ = 100;
+  uint m_heatBeatInterVal = 200;
 
-    public:
+ public:
+  std::vector<LogEntry> m_logs_;
+  co_mutex co_mtx_;
+  co_chan<ApplyMsg> *m_applyCh_ = nullptr;
+  co_chan<void *> *m_notifyApplyCh_ = nullptr;
+  co_chan<RETURN_TYPE> *m_StateChangedCh_ = nullptr;
 
-        int m_me_{-1};
-        int m_current_term_ = 0;
-        int m_votedFor_ = -1;
-        int m_commitIndex_ = 0;
-        int m_lastApplied_ = 0;
-        int m_snapShotIndex = 0;
-        int m_snapShotTerm = 0;
-        bool m_iskilled_ = false;
-        std::vector<std::string> m_clusterAddress_;
-        uint m_leaderEelectionTimeOut_ = 800;
-        uint m_rpcTimeOut_ = 100;
-        uint m_heatBeatInterVal = 200;
-    public:
+  co_chan<void *> *m_stopCh_ = nullptr;
 
-        std::vector<LogEntry> m_logs_;
-        co_mutex co_mtx_;
-        co_chan<ApplyMsg> *m_applyCh_ = nullptr;
-        co_chan<void *> *m_notifyApplyCh_ = nullptr;
-        co_chan<RETURN_TYPE> *m_StateChangedCh_ = nullptr;
+  RpcClients *m_peers_ = nullptr;
+  AbstractPersist *m_persister_ = nullptr;
+  STATE m_state_ = STATE::FOLLOWER;
+  std::vector<int> m_nextIndex_;
+  std::vector<int> m_matchIndex_;
 
-        co_chan<void *> *m_stopCh_ = nullptr;
-
-        RpcClients *m_peers_ = nullptr;
-        AbstractPersist *m_persister_ = nullptr;
-        STATE m_state_ = STATE::FOLLOWER;
-        std::vector<int> m_nextIndex_;
-        std::vector<int> m_matchIndex_;
-
-        Timer *m_electionTimer = nullptr;
-        Timer *m_applyTimer = nullptr;
-        Timer *m_appendEntriesTimer = nullptr;
-        std::vector<Timer *> m_appendEntriesTimers_{nullptr};
-        co_chan<RETURN_TYPE>* isCompleteSnapFileInstallCh_;
-
-
-    };
-}
+  Timer *m_electionTimer = nullptr;
+  Timer *m_applyTimer = nullptr;
+  Timer *m_appendEntriesTimer = nullptr;
+  std::vector<Timer *> m_appendEntriesTimers_{nullptr};
+  co_chan<RETURN_TYPE> *isCompleteSnapFileInstallCh_;
+};
+}  // namespace craft

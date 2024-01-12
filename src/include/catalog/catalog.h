@@ -225,6 +225,7 @@ class Catalog {
     // to allow specification of the index type itself, not
     // just the key, value, and comparator types
 
+    // 注意这是BPlusTreeIndex 不是BPlusTree
     // TODO(chi): support both hash index and btree index
     auto index = std::make_unique<BPlusTreeIndex<KeyType, ValueType, KeyComparator>>(std::move(meta), bpm_);
 

@@ -25,10 +25,10 @@ auto GetWidthOfUtf8(const void *beg, const void *end, size_t *width) -> int {
 
 // NOLINTNEXTLINE
 auto main(int argc, char **argv) -> int {
-        std::thread([] { co_sched.Start(0,0); }).detach();
-    go[]{
-        std::cout << "in libgo";
-    };
+    //     std::thread([] { co_sched.Start(0,0); }).detach();
+    // go[]{
+    //     std::cout << "in libgo";
+    // };
   ft_set_u8strwid_func(&GetWidthOfUtf8);
  // start libgo coroutine
   auto bustub = std::make_unique<bustub::BustubInstance>("test.db");

@@ -10,6 +10,7 @@ add_subdirectory(storage)
 add_subdirectory(type)
 add_subdirectory(planner)
 add_subdirectory(primer)
+
 add_subdirectory(optimizer)
 
 add_library(bustub STATIC ${ALL_OBJECT_FILES})

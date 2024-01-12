@@ -35,6 +35,8 @@ void SeqScanExecutor::Init() {
 }
 
 auto SeqScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
+
+    // 每次返回 一个 满足条件的 tuple 和rid
   do {
     if (table_iter_ == table_info_->table_->End()) {
       if (exec_ctx_->GetTransaction()->GetIsolationLevel() == IsolationLevel::READ_COMMITTED) {
@@ -51,6 +53,7 @@ auto SeqScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
     *tuple = *table_iter_;
     *rid = tuple->GetRid();
     ++table_iter_;
+    // 注意这个while循环的条件，是不满足谓词的话就继续往下走
   } while (plan_->filter_predicate_ != nullptr &&
            !plan_->filter_predicate_->Evaluate(tuple, table_info_->schema_).GetAs<bool>());
 

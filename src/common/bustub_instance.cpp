@@ -175,7 +175,7 @@ auto BustubInstance::ExecuteSql(const std::string &sql, ResultWriter &writer) ->
   auto txn = txn_manager_->Begin();
   auto result = ExecuteSqlTxn(sql, writer, txn);
   txn_manager_->Commit(txn);
-  buffer_pool_manager_->FlushAllPages();
+  // buffer_pool_manager_->FlushAllPages();
   delete txn;
   return result;
 }
@@ -308,6 +308,7 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
         break;
     }
 
+    //查询
     std::shared_lock<std::shared_mutex> l(catalog_lock_);
 
     // Plan the query.
@@ -345,7 +346,7 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
       writer.EndRow();
     }
     writer.EndTable();
-    buffer_pool_manager_->FlushAllPages();
+   // buffer_pool_manager_->FlushAllPages();
   }
   return is_successful;
 }

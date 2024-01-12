@@ -87,6 +87,7 @@ class ExecutionEngine {
                            std::vector<Tuple> *result_set) {
     RID rid{};
     Tuple tuple{};
+    // 如果 当前的executor 有chirld_executor，那么就会在当前的Next中调用chirld_executor->Next();
     while (executor->Next(&tuple, &rid)) {
       if (result_set != nullptr) {
         result_set->push_back(tuple);

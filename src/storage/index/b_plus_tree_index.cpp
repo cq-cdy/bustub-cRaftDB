@@ -19,13 +19,14 @@ INDEX_TEMPLATE_ARGUMENTS
 BPLUSTREE_INDEX_TYPE::BPlusTreeIndex(std::unique_ptr<IndexMetadata> &&metadata, BufferPoolManager *buffer_pool_manager)
     : Index(std::move(metadata)),
       comparator_(GetMetadata()->GetKeySchema()),
+      // 通过 GetMetadata()->GetName() 可以后续拿到该列名所对应的b+树的root_page_id ;
       container_(GetMetadata()->GetName(), buffer_pool_manager, comparator_) {}
 
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_INDEX_TYPE::InsertEntry(const Tuple &key, RID rid, Transaction *transaction) {
   // construct insert index key
   KeyType index_key;
-  index_key.SetFromKey(key);
+  index_key.SetFromKey(key);  // 从tuple中拿到索引列名称
 
   container_.Insert(index_key, rid, transaction);
 }
