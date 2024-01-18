@@ -35,6 +35,7 @@ void NestedLoopJoinExecutor::Init() {
   right_executor_->Init();
   Tuple tuple{};
   RID rid{};
+  // 通常来说right_executor_此时是scan_executor
   while (right_executor_->Next(&tuple, &rid)) {
     right_tuples_.push_back(tuple);
   }

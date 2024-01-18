@@ -28,6 +28,7 @@ void AggregationExecutor::Init() {
   child_->Init();
   Tuple tuple{};
   RID rid{};
+  // 真正的聚集某一列
   while (child_->Next(&tuple, &rid)) {
     aht_.InsertCombine(MakeAggregateKey(&tuple), MakeAggregateValue(&tuple));
   }
@@ -37,6 +38,7 @@ void AggregationExecutor::Init() {
   aht_iterator_ = aht_.Begin();
 }
 
+// 每一次调用这个AggregationExecutor::Next方法相当于返回一个要聚集的列的结果
 auto AggregationExecutor::Next(Tuple *tuple, RID *rid) -> bool {
   if (aht_iterator_ == aht_.End()) {
     return false;
