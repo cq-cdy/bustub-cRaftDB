@@ -191,6 +191,7 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
       CmdDisplayIndices(writer);
       return true;
     }
+    
     if (sql == "\\help") {
       CmdDisplayHelp(writer);
       return true;
