@@ -19,5 +19,7 @@ class bustubDB : public craft::AbstractPersist{
 
 ## 接下来的工作是将这个简单的关系型数据库内核分布式化
 
+已经初步构建分布式环境`bustub/src/tools/raftDB` 和 `bustub/src/include/raft`
+
 
 
