@@ -1,4 +1,5 @@
 add_subdirectory(shell)
+add_subdirectory(raftDB)
 # add_subdirectory(sqllogictest)
 # add_subdirectory(wasm-shell)
 # add_subdirectory(b_plus_tree_printer)

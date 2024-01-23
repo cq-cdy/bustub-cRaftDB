@@ -1,8 +1,12 @@
-#pragma once
+#ifndef COMMON_UTIL_H
+#define COMMON_UTIL_H
 #include <regex>
 #include <string>
+#include "raft/json.hpp"
 #include "fstream"
+#include "spdlog/spdlog.h"
 #include "unordered_map"
+using json = nlohmann::json;
 bool isValidIpPort(const std::string &str) {
   std::regex pattern(
       "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\:([0-9]{1,5})$");
@@ -53,3 +57,6 @@ class ConfigReader {
     return str.substr(first, (last - first + 1));
   }
 };
+
+
+#endif COMMON_UTIL_H
