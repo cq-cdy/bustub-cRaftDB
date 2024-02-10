@@ -43,7 +43,9 @@ class cRaftDB : public craft::AbstractPersist {
   void serialization() override {}
 
  private:
-  std::unordered_map<int, int> lastApplies;
+  std::unordered_map<int, int> lastApplies_;
   craft::Raft *raft_ptr = nullptr;
   co_chan<ApplyMsg> *msgCh_ptr = nullptr;
+  std::mutex mtx_;
+  co_mutex co_mtx_;
 };
