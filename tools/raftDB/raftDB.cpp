@@ -40,30 +40,30 @@ auto main(int arc, char **argv) -> int {
   cRaftDB db(abs_path,dbName);
   sleep(INT32_MAX);
 //   c
-//   auto bustub = std::make_unique<bustub::BustubInstance>(dbName);
-//   bustub->GenerateMockTable();
+  auto bustub = std::make_unique<bustub::BustubInstance>(dbName);
+  bustub->GenerateMockTable();
 
-//   if (bustub->buffer_pool_manager_ != nullptr) {
-//     bustub->GenerateTestTable();
-//   }
+  if (bustub->buffer_pool_manager_ != nullptr) {
+    bustub->GenerateTestTable();
+  }
 
-//   linenoiseHistorySetMaxLen(1024);
-//   linenoiseSetMultiLine(1);
-//   //cRaftDB db_server(abs_path, dbName);
-//   co_chan<ApplyMsg> msgCh(100000);
-//   craft::Raft raft(&db_server, &msgCh);
-//   raft.launch();
+  linenoiseHistorySetMaxLen(1024);
+  linenoiseSetMultiLine(1);
+  cRaftDB db_server(abs_path, dbName);
+  co_chan<ApplyMsg> msgCh(100000);
+  craft::Raft raft(&db_server, &msgCh);
+  raft.launch();
 
-//   while (true) {
-//     auto writer = bustub::FortTableWriter();
-//     ApplyMsg msg;
-//     msgCh >> msg;
-//     auto sqlJson = jsonFromString(msg.command.content);
-//     spdlog::debug("get commit json : {}" ,sqlJson.dump());
-//     auto  sql = sqlJson["sql"];
-//     bustub->ExecuteSql(sql, writer);
-//     //writer 是结果集
-//   }
+  while (true) {
+    auto writer = bustub::FortTableWriter();
+    ApplyMsg msg;
+    msgCh >> msg;
+    auto sqlJson = jsonFromString(msg.command.content);
+    spdlog::debug("get commit json : {}" ,sqlJson.dump());
+    auto  sql = sqlJson["sql"];
+    bustub->ExecuteSql(sql, writer);
+    //writer 是结果集
+  }
   sleep(INTMAX_MAX);
 }
 #else

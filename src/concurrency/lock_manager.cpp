@@ -18,6 +18,10 @@
 
 namespace bustub {
 
+/*
+核心数据结构 就是map[table_oid_t，LockRequestQueue(...,rid,txn,lock_mode_,granted,...)]
+然后按照锁的理论逻辑来大量判断
+*/
 auto LockManager::LockTable(Transaction *txn, LockMode lock_mode, const table_oid_t &oid) -> bool {
   // 分隔离情况分别讨论 1.READ_UNCOMMITTED
   if (txn->GetIsolationLevel() == IsolationLevel::READ_UNCOMMITTED) {

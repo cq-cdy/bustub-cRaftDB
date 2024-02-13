@@ -326,7 +326,25 @@ class LockManager {
     row_lock_set->second.erase(rid);
   }
 
+    /*
+    函数维护两个集合：active_set_ 和 safe_set_。
+    active_set_：包含当前活动（进行中）的事务。
+    safe_set_：包含已知为安全的事务（即不涉及环的事务）。
+    对于给定的 txn_id，首先检查它是否已经在 safe_set_ 中。如果是，则返回 false。
+    否则，将 txn_id 添加到 active_set_ 中。
+    接下来，它检查当前 txn_id 等待的事务（存储在 waits_for_ 中）。
+    如果其中任何一个事务已经在 active_set_ 中，说明存在环，函数返回 true。
+    否则，递归调用自身（Dfs）以处理每个等待的事务（next_node）。
+    在探索完所有依赖关系后，从 active_set_ 中移除 txn_id，并将其添加到 safe_set_ 中。
+    最后，返回 false（表示未找到环）。
+    wait_for [tx1] 事务1在等待哪些事务
+
+    如果存在环（即存在依赖循环），函数返回 true。
+    否则，返回 false。
+    */
+
   auto Dfs(txn_id_t txn_id) -> bool {
+    // 如果 在 safe_set_ 中找到了 txn_id
     if (safe_set_.find(txn_id) != safe_set_.end()) {
       return false;
     }

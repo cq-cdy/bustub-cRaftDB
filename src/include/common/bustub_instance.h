@@ -225,7 +225,7 @@ class BustubInstance {
   /**
    * Execute a SQL query in the BusTub instance with provided txn.
    */
-  auto ExecuteSqlTxn(const std::string &sql, ResultWriter &writer, Transaction *txn) -> bool;
+  auto ExecuteSqlTxn(const std::string &sql, ResultWriter &writer, Transaction *txn,Binder& binder) -> bool;
 
   /**
    * FOR TEST ONLY. Generate test tables in this BusTub instance.
@@ -272,6 +272,7 @@ class BustubInstance {
   void CmdDisplayHelp(ResultWriter &writer);
   void WriteOneCell(const std::string &cell, ResultWriter &writer);
   std::unordered_map<std::string, std::string> session_variables_;
+  bool isSELECTsql = false;
 };
 
 }  // namespace bustub

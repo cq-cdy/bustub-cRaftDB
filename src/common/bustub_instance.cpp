@@ -172,14 +172,30 @@ see the execution plan of your query.
 }
 
 auto BustubInstance::ExecuteSql(const std::string &sql, ResultWriter &writer) -> bool {
+  bustub::Binder binder(*catalog_);
+  binder.ParseAndSave(sql);
+  for (auto *stmt : binder.statement_nodes_) {
+    auto statement = binder.BindStatement(stmt);
+    if (statement->type_ == StatementType::SELECT_STATEMENT) {
+      isSELECTsql = true;
+      break;
+    }
+  }
+  if(!isSELECTsql){
+    // todo commit to raft;
+    
+  }
+  isSELECTsql = false;
   auto txn = txn_manager_->Begin();
-  auto result = ExecuteSqlTxn(sql, writer, txn);
+  auto result = ExecuteSqlTxn(sql, writer, txn, binder);
+
   txn_manager_->Commit(txn);
   delete txn;
   return result;
 }
 
-auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer, Transaction *txn) -> bool {
+auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer, Transaction *txn, Binder &binder)
+    -> bool {
   if (!sql.empty() && sql[0] == '\\') {
     // Internal meta-commands, like in `psql`.
     if (sql == "\\dt") {
@@ -190,7 +206,7 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
       CmdDisplayIndices(writer);
       return true;
     }
-    
+
     if (sql == "\\help") {
       CmdDisplayHelp(writer);
       return true;
@@ -201,16 +217,18 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
   bool is_successful = true;
 
   std::shared_lock<std::shared_mutex> l(catalog_lock_);
-  bustub::Binder binder(*catalog_);
-  binder.ParseAndSave(sql);
+  // bustub::Binder binder(*catalog_);
+  //binder.ParseAndSave(sql);
   l.unlock();
 
   for (auto *stmt : binder.statement_nodes_) {
     auto statement = binder.BindStatement(stmt);
+    if (statement->type_ == StatementType::SELECT_STATEMENT) {
+      isSELECTsql = true;
+    }
     switch (statement->type_) {
       case StatementType::CREATE_STATEMENT: {
         const auto &create_stmt = dynamic_cast<const CreateStatement &>(*statement);
-
         std::unique_lock<std::shared_mutex> l(catalog_lock_);
         auto info = catalog_->CreateTable(txn, create_stmt.table_, Schema(create_stmt.columns_));
         l.unlock();
@@ -250,17 +268,20 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
         continue;
       }
       case StatementType::VARIABLE_SHOW_STATEMENT: {
+
         const auto &show_stmt = dynamic_cast<const VariableShowStatement &>(*statement);
         auto content = GetSessionVariable(show_stmt.variable_);
         WriteOneCell(fmt::format("{}={}", show_stmt.variable_, content), writer);
         continue;
       }
       case StatementType::VARIABLE_SET_STATEMENT: {
+
         const auto &set_stmt = dynamic_cast<const VariableSetStatement &>(*statement);
         session_variables_[set_stmt.variable_] = set_stmt.value_;
         continue;
       }
       case StatementType::EXPLAIN_STATEMENT: {
+
         const auto &explain_stmt = dynamic_cast<const ExplainStatement &>(*statement);
         std::string output;
 
@@ -345,7 +366,7 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
       writer.EndRow();
     }
     writer.EndTable();
-   // buffer_pool_manager_->FlushAllPages();
+    // buffer_pool_manager_->FlushAllPages();
   }
   return is_successful;
 }
