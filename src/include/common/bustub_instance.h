@@ -28,6 +28,7 @@
 #include "libfort/lib/fort.hpp"
 #include "type/value.h"
 
+#include "raft/craft/raft.h"
 namespace bustub {
 
 class Transaction;
@@ -203,7 +204,7 @@ class FortTableWriter : public ResultWriter {
   std::vector<std::string> tables_;
 };
 
-class BustubInstance {
+class BustubInstance : public craft::AbstractPersist {
  private:
   /**
    * Get the executor context from the BusTub instance.
@@ -211,9 +212,11 @@ class BustubInstance {
   auto MakeExecutorContext(Transaction *txn) -> std::unique_ptr<ExecutorContext>;
 
  public:
-  explicit BustubInstance(const std::string &db_file_name);
+  explicit BustubInstance(const std::string &path, const std::string &db_file_name);
+  void deserialization(const char *filename) override;
 
-  BustubInstance();
+  void serialization() override;
+  // BustubInstance();
 
   ~BustubInstance();
 
@@ -225,7 +228,7 @@ class BustubInstance {
   /**
    * Execute a SQL query in the BusTub instance with provided txn.
    */
-  auto ExecuteSqlTxn(const std::string &sql, ResultWriter &writer, Transaction *txn,Binder& binder) -> bool;
+  auto ExecuteSqlTxn(const std::string &sql, ResultWriter &writer, Transaction *txn, Binder &binder) -> bool;
 
   /**
    * FOR TEST ONLY. Generate test tables in this BusTub instance.
@@ -273,6 +276,13 @@ class BustubInstance {
   void WriteOneCell(const std::string &cell, ResultWriter &writer);
   std::unordered_map<std::string, std::string> session_variables_;
   bool isSELECTsql = false;
+  craft::Raft *raft_ptr = nullptr;
+  co_chan<ApplyMsg> *msgCh_ptr = nullptr;
+  std::mutex mtx_;
+  co_mutex co_mtx_;
+
+ public:
+  std::unordered_map<int, int> lastApplies_;
 };
 
 }  // namespace bustub

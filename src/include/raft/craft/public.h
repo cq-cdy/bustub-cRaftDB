@@ -75,7 +75,7 @@ static void check(const std::filesystem::path &dir) {
     }
 }
 
-json jsonFromString(std::string str) {
+static json jsonFromString(std::string str) {
   json js;
   try {
     js = json::parse(str);
@@ -87,7 +87,7 @@ json jsonFromString(std::string str) {
   return js;
 }
 
-void checkJson(json &js) {
+static void checkJson(json &js) {
   if (js.find("clientId") == js.end()) {
     spdlog::error("not fount json [clientId]!");
     exit(1);

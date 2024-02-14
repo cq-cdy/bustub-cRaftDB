@@ -7,7 +7,7 @@
 #include "libfort/lib/fort.hpp"
 #include "linenoise/linenoise.h"
 #include "utf8proc/utf8proc.h"
-#include "raft/craft/raft.h"
+
 auto GetWidthOfUtf8(const void *beg, const void *end, size_t *width) -> int {
   size_t computed_width = 0;
   utf8proc_ssize_t n;
@@ -31,7 +31,7 @@ auto main(int argc, char **argv) -> int {
     // };
   ft_set_u8strwid_func(&GetWidthOfUtf8);
  // start libgo coroutine
-  auto bustub = std::make_unique<bustub::BustubInstance>("test.db");
+  auto bustub = std::make_unique<bustub::BustubInstance>("/home/cdy/code/projects/bustub/tools/shell","test.db");
 
   auto default_prompt = "TaLonSQL> ";
   auto emoji_prompt = "\U0001f6c1> ";  // the bathtub emoji
@@ -100,7 +100,10 @@ auto main(int argc, char **argv) -> int {
 
     try {
       auto writer = bustub::FortTableWriter();
-      bustub->ExecuteSql(query, writer);
+      json js(query);
+      checkJson(js);
+      // 线性一致性判断
+      bustub->ExecuteSql(js["sql"], writer);
       for (const auto &table : writer.tables_) {
         std::cout << table;
       }

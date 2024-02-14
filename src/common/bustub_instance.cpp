@@ -40,12 +40,22 @@ namespace bustub {
 auto BustubInstance::MakeExecutorContext(Transaction *txn) -> std::unique_ptr<ExecutorContext> {
   return std::make_unique<ExecutorContext>(txn, catalog_, buffer_pool_manager_, txn_manager_, lock_manager_);
 }
+void BustubInstance::deserialization(const char *filename) {}
 
-BustubInstance::BustubInstance(const std::string &db_file_name) {
+void BustubInstance::serialization() {}
+
+BustubInstance::BustubInstance(const std::string &path, const std::string &db_snap_file_name)
+    : AbstractPersist(std::move(path), std::move(db_snap_file_name)) {
+ std::thread([] { co_sched.Start(3, 6); }).detach();
+  msgCh_ptr = new co_chan<ApplyMsg>(100);
+  raft_ptr = new craft::Raft(this, msgCh_ptr);
+  raft_ptr->setClusterAddress({"127.0.0.1:12345", "127.0.0.1:12346", "127.0.0.1:12347"});
+  raft_ptr->setLogLevel(spdlog::level::info);
+  raft_ptr->launch();  // launch raft RPC service
   enable_logging = false;
 
   // Storage related.
-  disk_manager_ = new DiskManager(db_file_name);
+  disk_manager_ = new DiskManager(path + '/' + db_snap_file_name);
 
   // Log related.
   log_manager_ = new LogManager(disk_manager_);
@@ -73,36 +83,36 @@ BustubInstance::BustubInstance(const std::string &db_file_name) {
   execution_engine_ = new ExecutionEngine(buffer_pool_manager_, txn_manager_, catalog_);
 }
 
-BustubInstance::BustubInstance() {
-  enable_logging = false;
+// BustubInstance::BustubInstance() {
+//   enable_logging = false;
 
-  // Storage related.
-  disk_manager_ = new DiskManagerUnlimitedMemory();
-  // Log related.
-  log_manager_ = new LogManager(disk_manager_);
+//   // Storage related.
+//   disk_manager_ = new DiskManagerUnlimitedMemory();
+//   // Log related.
+//   log_manager_ = new LogManager(disk_manager_);
 
-  // We need more frames for GenerateTestTable to work. Therefore, we use 128 instead of the default
-  // buffer pool size specified in `config.h`.
-  try {
-    buffer_pool_manager_ = new BufferPoolManagerInstance(128, disk_manager_, LRUK_REPLACER_K, log_manager_);
-  } catch (NotImplementedException &e) {
-    std::cerr << "BufferPoolManager is not implemented, only mock tables are supported." << std::endl;
-    buffer_pool_manager_ = nullptr;
-  }
+//   // We need more frames for GenerateTestTable to work. Therefore, we use 128 instead of the default
+//   // buffer pool size specified in `config.h`.
+//   try {
+//     buffer_pool_manager_ = new BufferPoolManagerInstance(128, disk_manager_, LRUK_REPLACER_K, log_manager_);
+//   } catch (NotImplementedException &e) {
+//     std::cerr << "BufferPoolManager is not implemented, only mock tables are supported." << std::endl;
+//     buffer_pool_manager_ = nullptr;
+//   }
 
-  // Transaction (txn) related.
-  lock_manager_ = new LockManager();
-  txn_manager_ = new TransactionManager(lock_manager_, log_manager_);
+//   // Transaction (txn) related.
+//   lock_manager_ = new LockManager();
+//   txn_manager_ = new TransactionManager(lock_manager_, log_manager_);
 
-  // Checkpoint related.
-  checkpoint_manager_ = new CheckpointManager(txn_manager_, log_manager_, buffer_pool_manager_);
+//   // Checkpoint related.
+//   checkpoint_manager_ = new CheckpointManager(txn_manager_, log_manager_, buffer_pool_manager_);
 
-  // Catalog.
-  catalog_ = new Catalog(buffer_pool_manager_, lock_manager_, log_manager_);
+//   // Catalog.
+//   catalog_ = new Catalog(buffer_pool_manager_, lock_manager_, log_manager_);
 
-  // Execution engine.
-  execution_engine_ = new ExecutionEngine(buffer_pool_manager_, txn_manager_, catalog_);
-}
+//   // Execution engine.
+//   execution_engine_ = new ExecutionEngine(buffer_pool_manager_, txn_manager_, catalog_);
+// }
 
 void BustubInstance::CmdDisplayTables(ResultWriter &writer) {
   auto table_names = catalog_->GetTableNames();
@@ -181,13 +191,17 @@ auto BustubInstance::ExecuteSql(const std::string &sql, ResultWriter &writer) ->
       break;
     }
   }
-  if(!isSELECTsql){
+  std::string commited_sql;
+  if (!isSELECTsql) {
+    while(raft_ptr->submitCommand(sql).isLeader);
+    ApplyMsg msg;
+    *msgCh_ptr >> msg;
+    commited_sql = msg.command.content;
     // todo commit to raft;
-    
   }
   isSELECTsql = false;
   auto txn = txn_manager_->Begin();
-  auto result = ExecuteSqlTxn(sql, writer, txn, binder);
+  auto result = ExecuteSqlTxn(commited_sql, writer, txn, binder);
 
   txn_manager_->Commit(txn);
   delete txn;
@@ -218,7 +232,7 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
 
   std::shared_lock<std::shared_mutex> l(catalog_lock_);
   // bustub::Binder binder(*catalog_);
-  //binder.ParseAndSave(sql);
+  // binder.ParseAndSave(sql);
   l.unlock();
 
   for (auto *stmt : binder.statement_nodes_) {
@@ -268,20 +282,17 @@ auto BustubInstance::ExecuteSqlTxn(const std::string &sql, ResultWriter &writer,
         continue;
       }
       case StatementType::VARIABLE_SHOW_STATEMENT: {
-
         const auto &show_stmt = dynamic_cast<const VariableShowStatement &>(*statement);
         auto content = GetSessionVariable(show_stmt.variable_);
         WriteOneCell(fmt::format("{}={}", show_stmt.variable_, content), writer);
         continue;
       }
       case StatementType::VARIABLE_SET_STATEMENT: {
-
         const auto &set_stmt = dynamic_cast<const VariableSetStatement &>(*statement);
         session_variables_[set_stmt.variable_] = set_stmt.value_;
         continue;
       }
       case StatementType::EXPLAIN_STATEMENT: {
-
         const auto &explain_stmt = dynamic_cast<const ExplainStatement &>(*statement);
         std::string output;
 

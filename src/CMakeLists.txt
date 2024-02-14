@@ -14,7 +14,7 @@ add_subdirectory(primer)
 add_subdirectory(optimizer)
 
 add_library(bustub STATIC ${ALL_OBJECT_FILES})
-
+include(common.cmake)
 set(BUSTUB_LIBS
         bustub_binder
         bustub_buffer
@@ -48,7 +48,18 @@ set(BUSTUB_THIRDPARTY_LIBS
 target_link_libraries(
         bustub
         ${BUSTUB_LIBS}
-        ${BUSTUB_THIRDPARTY_LIBS})
+        ${BUSTUB_THIRDPARTY_LIBS}
+        craft
+        absl::flags
+        absl::flags_parse
+        ${_REFLECTION}
+        ${_GRPC_GRPCPP}
+        ${_PROTOBUF_LIBPROTOBUF}
+        libgo
+        dl
+        pthread
+        
+        )
 
 target_include_directories(
         bustub PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
