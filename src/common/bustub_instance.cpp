@@ -50,7 +50,7 @@ BustubInstance::BustubInstance(const std::string &path, const std::string &db_sn
   msgCh_ptr = new co_chan<ApplyMsg>(100);
   raft_ptr = new craft::Raft(this, msgCh_ptr);
   raft_ptr->setClusterAddress({"127.0.0.1:12345", "127.0.0.1:12346", "127.0.0.1:12347"});
-  raft_ptr->setLogLevel(spdlog::level::info);
+  raft_ptr->setLogLevel(spdlog::level::err);
   raft_ptr->launch();  // launch raft RPC service
   enable_logging = false;
 
@@ -181,8 +181,9 @@ see the execution plan of your query.
   WriteOneCell(help, writer);
 }
 
-auto BustubInstance::ExecuteSql(const std::string &sql, ResultWriter &writer) -> bool {
+auto BustubInstance::ExecuteSql(const json &js, ResultWriter &writer) -> bool {
   bustub::Binder binder(*catalog_);
+  std::string sql= js["sql"];
   binder.ParseAndSave(sql);
   for (auto *stmt : binder.statement_nodes_) {
     auto statement = binder.BindStatement(stmt);
@@ -197,7 +198,7 @@ auto BustubInstance::ExecuteSql(const std::string &sql, ResultWriter &writer) ->
     ApplyMsg msg;
     *msgCh_ptr >> msg;
     commited_sql = msg.command.content;
-    // todo commit to raft;
+    lastApplies_[js["clientId"]] = js["commandId"];
   }
   isSELECTsql = false;
   auto txn = txn_manager_->Begin();

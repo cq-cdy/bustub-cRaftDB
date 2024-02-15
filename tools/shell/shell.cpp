@@ -64,7 +64,9 @@ auto main(int argc, char **argv) -> int {
 
   while (true) {
     std::string query;
+    json js;
     bool first_line = true;
+    // 测试用终端shell，实际要改成rpc ，从节点不能用shell，不然从节点无法excute sql
     while (true) {
       auto line_prompt = first_line ? prompt : "... ";
       if (!disable_tty) {
@@ -100,10 +102,20 @@ auto main(int argc, char **argv) -> int {
 
     try {
       auto writer = bustub::FortTableWriter();
-      json js(query);
+      
+      js["sql"] = query;
+      js["clientId"] = "127.0.0.1";
+      js["commandId"] = 12345;
+      // 上述js 对象可以由rpc对象替换
       checkJson(js);
-      // 线性一致性判断
-      bustub->ExecuteSql(js["sql"], writer);
+    
+      bustub->co_mtx_.lock();
+      if(bustub->lastApplies_[js["clientId"]] == js["commandId"]){
+        // 重复了
+        continue;
+      }
+      bustub->co_mtx_.unlock();
+      bustub->ExecuteSql(js, writer);
       for (const auto &table : writer.tables_) {
         std::cout << table;
       }

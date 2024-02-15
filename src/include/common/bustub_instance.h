@@ -29,6 +29,7 @@
 #include "type/value.h"
 
 #include "raft/craft/raft.h"
+#include "raft/json.hpp"
 namespace bustub {
 
 class Transaction;
@@ -223,7 +224,7 @@ class BustubInstance : public craft::AbstractPersist {
   /**
    * Execute a SQL query in the BusTub instance.
    */
-  auto ExecuteSql(const std::string &sql, ResultWriter &writer) -> bool;
+  auto ExecuteSql(const json &js, ResultWriter &writer) -> bool;
 
   /**
    * Execute a SQL query in the BusTub instance with provided txn.
@@ -276,13 +277,13 @@ class BustubInstance : public craft::AbstractPersist {
   void WriteOneCell(const std::string &cell, ResultWriter &writer);
   std::unordered_map<std::string, std::string> session_variables_;
   bool isSELECTsql = false;
+
+ public:
+  std::unordered_map<std::string, int> lastApplies_;
   craft::Raft *raft_ptr = nullptr;
   co_chan<ApplyMsg> *msgCh_ptr = nullptr;
   std::mutex mtx_;
   co_mutex co_mtx_;
-
- public:
-  std::unordered_map<int, int> lastApplies_;
 };
 
 }  // namespace bustub
