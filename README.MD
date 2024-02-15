@@ -32,7 +32,7 @@ class BustubInstance : public craft::AbstractPersist {
 
 > 但例如实现KV服务器时，就需要对KV时重写反序列化来保证哪些数据需要被加载到内存中，和哪些数据在快照转移时需要序列化到快照文件中，
 
-在实例化时指定raft日志文件目录和db_dile文件名，实现快照接口解耦
+在实例化时指定raft日志文件目录和db_file文件名，实现快照接口解耦
 ``` c++
 BustubInstance::BustubInstance(const std::string &path, const std::string &db_snap_file_name)
     : AbstractPersist(std::move(path), std::move(db_snap_file_name)) {
