@@ -10,6 +10,8 @@
 
 参考代码[bustub](https://github.com/cmu-db/bustub) 和[bustub](https://github.com/ejunjsh/bustub)
 
+> 当然很蠢的是目前只是做了一个简单的去共识SQL语句(性能很低)， 没有去共识操作日志和底层KV Pair。 
+
 目前整体的cmu-busub代码量约1.4W行，目前已经完成了cmu的数据库内核的实现，以及将cRaft代码库整合上(tools/shell/shell.cpp)，接下来准备完成的是重写sql的上层服务将其分布式。
 
 
